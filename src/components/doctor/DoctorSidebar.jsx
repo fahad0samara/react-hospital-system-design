@@ -33,6 +33,11 @@ const DoctorSidebar = ({ isOpen }) => {
       path: '/doctor/emergency'
     },
     {
+      title: 'Documents',
+      icon: <FiFileText className="w-5 h-5" />,
+      path: '/doctor/documents'
+    },
+    {
       title: 'Messages',
       icon: <FiMessageSquare className="w-5 h-5" />,
       path: '/doctor/messages'

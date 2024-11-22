@@ -45,6 +45,11 @@ const Sidebar = ({ isOpen }) => {
       title: 'Reports',
       icon: <FiPrinter className="w-5 h-5" />,
       path: '/doctor/reports'
+    },
+    {
+      title: 'Documents',
+      icon: <FiFileText className="w-5 h-5" />,
+      path: '/doctor/documents'
     }
   ];
 
