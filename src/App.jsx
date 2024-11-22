@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
 import { Provider } from 'react-redux'
 import { store } from './app/store'
 import Login from './components/Login'
@@ -12,6 +12,10 @@ import Sidebar from './components/Sidebar'
 import { useSelector } from 'react-redux'
 import { logout } from './features/authSlice'
 import { useDispatch } from 'react-redux'
+import React from 'react';
+import { EmergencyProvider } from './context/EmergencyContext';
+import EmergencyDashboard from './components/dashboard/EmergencyDashboard';
+import AdminDashboard from './components/dashboard/AdminDashboard';
 
 function Navigation() {
   const { isAuthenticated, user } = useSelector((state) => state.auth)
@@ -80,23 +84,28 @@ function Layout({ children }) {
 function App() {
   return (
     <Provider store={store}>
-      <Router>
-        <div className="min-h-screen bg-gray-100">
-          <Navigation />
-          <Layout>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
-              <Route path="/doctor/appointments" element={<AppointmentsPage />} />
-              <Route path="/doctor/patients" element={<PatientsPage />} />
-              <Route path="/doctor/notes" element={<QuickNotes />} />
-              <Route path="/patient-dashboard" element={<PatientDashboard />} />
-              <Route path="/" element={<Login />} />
-            </Routes>
-          </Layout>
-        </div>
-      </Router>
+      <EmergencyProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <Navigation />
+            <Layout>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+                <Route path="/doctor/appointments" element={<AppointmentsPage />} />
+                <Route path="/doctor/patients" element={<PatientsPage />} />
+                <Route path="/doctor/notes" element={<QuickNotes />} />
+                <Route path="/patient-dashboard" element={<PatientDashboard />} />
+                <Route path="/emergency-dashboard" element={<EmergencyDashboard />} />
+                <Route path="/admin/emergency" element={<AdminDashboard />} />
+                <Route path="/doctor/emergency" element={<EmergencyDashboard />} />
+                <Route path="/" element={<Navigate to="/admin/emergency" replace />} />
+              </Routes>
+            </Layout>
+          </div>
+        </Router>
+      </EmergencyProvider>
     </Provider>
   )
 }

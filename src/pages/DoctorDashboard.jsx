@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import DashboardCharts from '../components/DashboardCharts'
 import UserProfile from '../components/UserProfile'
+import Emergency from '../components/quick-actions/Emergency';
+import Reports from '../components/quick-actions/Reports';
+import AddPatient from '../components/quick-actions/AddPatient';
+import NewAppointment from '../components/quick-actions/NewAppointment';
+import VideoCall from '../components/quick-actions/VideoCall';
+import Messages from '../components/quick-actions/Messages';
 import { 
   FiBell, 
   FiCalendar, 
@@ -16,7 +22,8 @@ import {
   FiMessageSquare,
   FiPlusCircle,
   FiFileText,
-  FiVideo
+  FiVideo,
+  FiAlertTriangle
 } from 'react-icons/fi'
 
 export default function DoctorDashboard() {
@@ -24,6 +31,12 @@ export default function DoctorDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTab, setSelectedTab] = useState('overview')
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [showNewAppointment, setShowNewAppointment] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [showEmergency, setShowEmergency] = useState(false);
+  const [showReports, setShowReports] = useState(false);
   const { patients, dailyVisits } = useSelector((state) => state.patients)
 
   // Mock notifications
@@ -291,29 +304,75 @@ export default function DoctorDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Quick Actions */}
-      <div className="mb-8">
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
-          {quickActions.map((action, index) => (
-            <button
-              key={index}
-              onClick={() => handleQuickAction(action)}
-              className={`group flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-br ${
-                action.color === 'blue' ? 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700' :
-                action.color === 'green' ? 'from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700' :
-                action.color === 'red' ? 'from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700' :
-                'from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700'
-              } text-white shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105`}
-            >
-              <span className="text-white text-2xl mb-2 group-hover:scale-110 transition-transform duration-200">
-                {action.icon}
-              </span>
-              <span className="font-medium text-sm text-center whitespace-nowrap">
-                {action.label}
-              </span>
-            </button>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-8">
+        <button
+          onClick={() => setShowAddPatient(true)}
+          className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center justify-center space-y-3 group hover:scale-105"
+        >
+          <div className="p-3 bg-blue-500 rounded-xl text-white group-hover:scale-110 transition-transform duration-200">
+            <FiUserPlus className="w-6 h-6" />
+          </div>
+          <span className="text-sm font-medium text-gray-800">Add Patient</span>
+        </button>
+
+        <button
+          onClick={() => setShowNewAppointment(true)}
+          className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center justify-center space-y-3 group hover:scale-105"
+        >
+          <div className="p-3 bg-green-500 rounded-xl text-white group-hover:scale-110 transition-transform duration-200">
+            <FiCalendar className="w-6 h-6" />
+          </div>
+          <span className="text-sm font-medium text-gray-800">New Appointment</span>
+        </button>
+
+        <button
+          onClick={() => setShowVideoCall(true)}
+          className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center justify-center space-y-3 group hover:scale-105"
+        >
+          <div className="p-3 bg-purple-500 rounded-xl text-white group-hover:scale-110 transition-transform duration-200">
+            <FiVideo className="w-6 h-6" />
+          </div>
+          <span className="text-sm font-medium text-gray-800">Video Call</span>
+        </button>
+
+        <button
+          onClick={() => setShowMessages(true)}
+          className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center justify-center space-y-3 group hover:scale-105"
+        >
+          <div className="p-3 bg-yellow-500 rounded-xl text-white group-hover:scale-110 transition-transform duration-200">
+            <FiMessageSquare className="w-6 h-6" />
+          </div>
+          <span className="text-sm font-medium text-gray-800">Messages</span>
+        </button>
+
+        <button
+          onClick={() => setShowEmergency(true)}
+          className="p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center justify-center space-y-3 group hover:scale-105"
+        >
+          <div className="p-3 bg-red-500 rounded-xl text-white group-hover:scale-110 transition-transform duration-200">
+            <FiAlertTriangle className="w-6 h-6" />
+          </div>
+          <span className="text-sm font-medium text-gray-800">Emergency</span>
+        </button>
+
+        <button
+          onClick={() => setShowReports(true)}
+          className="p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center justify-center space-y-3 group hover:scale-105"
+        >
+          <div className="p-3 bg-indigo-500 rounded-xl text-white group-hover:scale-110 transition-transform duration-200">
+            <FiFileText className="w-6 h-6" />
+          </div>
+          <span className="text-sm font-medium text-gray-800">Reports</span>
+        </button>
       </div>
+
+      {/* Quick Action Modals */}
+      <AddPatient isOpen={showAddPatient} onClose={() => setShowAddPatient(false)} />
+      <NewAppointment isOpen={showNewAppointment} onClose={() => setShowNewAppointment(false)} />
+      <VideoCall isOpen={showVideoCall} onClose={() => setShowVideoCall(false)} />
+      <Messages isOpen={showMessages} onClose={() => setShowMessages(false)} />
+      <Emergency isOpen={showEmergency} onClose={() => setShowEmergency(false)} />
+      <Reports isOpen={showReports} onClose={() => setShowReports(false)} />
 
       {/* Header with Navigation and User Profile */}
       <div className="flex justify-between items-center mb-8">
