@@ -9,16 +9,18 @@ import DoctorDashboard from './components/dashboard/DoctorDashboard';
 import AdminDashboard from './components/dashboard/AdminDashboard';
 import EmergencyReports from './components/reports/EmergencyReports';
 import DoctorReports from './components/reports/DoctorReports';
+import Patients from './components/patients/Patients'; // Added import statement
 import { useSelector } from 'react-redux';
 
 // Doctor Routes Component
 const DoctorRoutes = () => (
   <DoctorLayout>
     <Routes>
-      <Route path="/dashboard" element={<DoctorDashboard />} />
-      <Route path="/emergency" element={<DoctorDashboard />} />
-      <Route path="/reports" element={<DoctorReports />} />
-      <Route path="*" element={<Navigate to="/doctor/dashboard" replace />} />
+      <Route path="dashboard" element={<DoctorDashboard />} />
+      <Route path="emergency" element={<DoctorDashboard />} />
+      <Route path="patients" element={<Patients />} />
+      <Route path="reports" element={<DoctorReports />} />
+      <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   </DoctorLayout>
 );

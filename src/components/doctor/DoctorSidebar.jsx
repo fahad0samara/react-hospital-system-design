@@ -23,11 +23,6 @@ const DoctorSidebar = ({ isOpen }) => {
       path: '/doctor/dashboard'
     },
     {
-      title: 'Appointments',
-      icon: <FiCalendar className="w-5 h-5" />,
-      path: '/doctor/appointments'
-    },
-    {
       title: 'Patients',
       icon: <FiUsers className="w-5 h-5" />,
       path: '/doctor/patients'

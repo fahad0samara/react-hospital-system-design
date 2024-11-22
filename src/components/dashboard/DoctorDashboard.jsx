@@ -7,6 +7,7 @@ import VideoCall from '../quick-actions/VideoCall';
 import Messages from '../quick-actions/Messages';
 import Emergency from '../quick-actions/Emergency';
 import Reports from '../quick-actions/Reports';
+import PatientsPage from '../../pages/PatientsPage';
 import {
   FiSearch,
   FiBell,
@@ -24,7 +25,10 @@ import {
   FiDownload,
   FiMenu,
   FiX,
-  FiEdit
+  FiEdit,
+  FiHome,
+  FiSettings,
+  FiLogOut
 } from 'react-icons/fi';
 
 const DoctorDashboard = () => {
@@ -38,6 +42,7 @@ const DoctorDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showEmergency, setShowEmergency] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  const [currentPage, setCurrentPage] = useState('dashboard');
 
   // Get patient data from Redux store
   const { patients } = useSelector((state) => state.patients || { patients: [] });
