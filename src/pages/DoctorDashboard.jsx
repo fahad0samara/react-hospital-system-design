@@ -2,7 +2,22 @@ import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import DashboardCharts from '../components/DashboardCharts'
 import UserProfile from '../components/UserProfile'
-import { FiBell, FiCalendar, FiClock, FiUser, FiAlertCircle, FiSearch, FiPlus } from 'react-icons/fi'
+import { 
+  FiBell, 
+  FiCalendar, 
+  FiClock, 
+  FiUser, 
+  FiAlertCircle, 
+  FiSearch, 
+  FiPlus, 
+  FiUserPlus,
+  FiClipboard,
+  FiPhoneCall,
+  FiMessageSquare,
+  FiPlusCircle,
+  FiFileText,
+  FiVideo
+} from 'react-icons/fi'
 
 export default function DoctorDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -44,22 +59,92 @@ export default function DoctorDashboard() {
   const averageWaitTime = 12
   const emergencyCases = patients.filter(p => p.type === 'Emergency').length
 
-  // Quick actions
   const quickActions = [
-    { icon: <FiPlus className="w-5 h-5" />, label: 'New Appointment', color: 'blue', onClick: () => console.log('New Appointment clicked') },
-    { icon: <FiUser className="w-5 h-5" />, label: 'Add Patient', color: 'green', onClick: () => console.log('Add Patient clicked') },
-    { icon: <FiAlertCircle className="w-5 h-5" />, label: 'Emergency Case', color: 'red', onClick: () => console.log('Emergency clicked') },
-    { icon: <FiClock className="w-5 h-5" />, label: 'Schedule Break', color: 'purple', onClick: () => console.log('Schedule Break clicked') },
-  ]
+    {
+      label: 'Add Patient',
+      icon: <FiUserPlus className="w-6 h-6" />,
+      color: 'blue',
+      action: () => {
+        // Add new patient logic
+        console.log('Adding new patient...');
+        // You can add modal or navigation logic here
+      }
+    },
+    {
+      label: 'Schedule',
+      icon: <FiCalendar className="w-6 h-6" />,
+      color: 'green',
+      action: () => {
+        // Open scheduling interface
+        console.log('Opening schedule...');
+        setSelectedTab('appointments');
+      }
+    },
+    {
+      label: 'Start Call',
+      icon: <FiVideo className="w-6 h-6" />,
+      color: 'purple',
+      action: () => {
+        // Start video call logic
+        console.log('Starting video call...');
+        // Add video call initialization logic
+      }
+    },
+    {
+      label: 'Messages',
+      icon: <FiMessageSquare className="w-6 h-6" />,
+      color: 'red',
+      action: () => {
+        // Open messages
+        console.log('Opening messages...');
+        // Add messaging interface logic
+      }
+    },
+    {
+      label: 'New Appointment',
+      icon: <FiPlusCircle className="w-6 h-6" />,
+      color: 'blue',
+      action: () => {
+        // Create new appointment
+        console.log('Creating new appointment...');
+        // Add appointment creation logic
+      }
+    },
+    {
+      label: 'Emergency',
+      icon: <FiAlertCircle className="w-6 h-6" />,
+      color: 'red',
+      action: () => {
+        // Handle emergency
+        console.log('Emergency protocol initiated...');
+        // Add emergency handling logic
+      }
+    },
+    {
+      label: 'Reports',
+      icon: <FiFileText className="w-6 h-6" />,
+      color: 'green',
+      action: () => {
+        // View reports
+        console.log('Opening reports...');
+        setSelectedTab('analytics');
+      }
+    },
+    {
+      label: 'Consultations',
+      icon: <FiClipboard className="w-6 h-6" />,
+      color: 'purple',
+      action: () => {
+        // View consultations
+        console.log('Opening consultations...');
+        // Add consultation view logic
+      }
+    }
+  ];
 
   const handleQuickAction = (action) => {
-    action.onClick();
-  }
-
-  const handleViewDetails = (appointment) => {
-    console.log('Viewing details for:', appointment.name);
-    // Add your view details logic here
-  }
+    action.action();
+  };
 
   const renderTabContent = () => {
     switch (selectedTab) {
@@ -111,23 +196,6 @@ export default function DoctorDashboard() {
               ))}
             </div>
 
-            {/* Quick Actions */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {quickActions.map((action, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleQuickAction(action)}
-                    className={`flex items-center justify-center space-x-2 p-4 rounded-xl bg-${action.color}-50 hover:bg-${action.color}-100 transition-colors duration-200 border border-${action.color}-200`}
-                  >
-                    <span className={`text-${action.color}-600`}>{action.icon}</span>
-                    <span className={`text-${action.color}-700 font-medium`}>{action.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Appointments Section */}
             <div className="mb-8">
               <div className="flex justify-between items-center mb-6">
@@ -138,7 +206,7 @@ export default function DoctorDashboard() {
                     <input
                       type="text"
                       placeholder="Search appointments..."
-                      className="pl-10 pr-4 py-2 rounded-lg bg-white shadow-sm border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all w-64"
+                      className="pl-10 pr-4 py-2.5 rounded-xl bg-white shadow-md border-none focus:ring-2 focus:ring-blue-500 text-sm transition-all duration-300 w-64 hover:shadow-lg focus:shadow-lg"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -154,10 +222,10 @@ export default function DoctorDashboard() {
                   )
                   .map((appointment) => {
                     const colors = {
-                      Emergency: 'bg-red-50 border-red-200 text-red-700',
-                      Scheduled: 'bg-blue-50 border-blue-200 text-blue-700',
-                      'Follow-up': 'bg-green-50 border-green-200 text-green-700',
-                      Consultation: 'bg-purple-50 border-purple-200 text-purple-700',
+                      Emergency: 'bg-gradient-to-br from-rose-100 to-rose-50 border-rose-200 text-rose-700 hover:from-rose-200 hover:to-rose-100',
+                      Scheduled: 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-200 text-blue-700 hover:from-blue-200 hover:to-blue-100',
+                      'Follow-up': 'bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-200 text-emerald-700 hover:from-emerald-200 hover:to-emerald-100',
+                      Consultation: 'bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200 text-purple-700 hover:from-purple-200 hover:to-purple-100',
                     };
                     const type = appointment.appointmentType || 'Scheduled';
                     const colorClass = colors[type] || colors.Scheduled;
@@ -165,24 +233,24 @@ export default function DoctorDashboard() {
                     return (
                       <div
                         key={appointment.id}
-                        className={`group relative overflow-hidden rounded-xl ${colorClass} p-4 transition-all hover:shadow-lg border`}
+                        className={`group relative overflow-hidden rounded-2xl ${colorClass} p-5 transition-all duration-300 hover:shadow-xl border transform hover:scale-102`}
                       >
                         <div className="flex flex-col h-full min-h-[150px]">
-                          <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-start justify-between mb-3">
                             <div>
-                              <h3 className="font-semibold">{appointment.name}</h3>
-                              <p className="text-sm opacity-75">{appointment.appointmentType}</p>
+                              <h3 className="font-semibold text-lg">{appointment.name}</h3>
+                              <p className="text-sm opacity-90">{appointment.appointmentType}</p>
                             </div>
-                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-white/50">
+                            <span className="text-xs font-medium px-3 py-1.5 rounded-xl bg-white/70 backdrop-blur-sm shadow-sm group-hover:shadow-md transition-all duration-300">
                               {appointment.time}
                             </span>
                           </div>
                           <p className="text-sm mb-4">{appointment.reason}</p>
                           <div className="mt-auto flex justify-between items-center">
-                            <span className="text-xs">Room {appointment.room}</span>
+                            <span className="text-xs font-medium bg-white/50 px-2.5 py-1 rounded-lg">Room {appointment.room}</span>
                             <button 
-                              onClick={() => handleViewDetails(appointment)}
-                              className="text-xs font-medium px-3 py-1 rounded-lg bg-white hover:bg-opacity-75 transition-colors"
+                              onClick={() => console.log('Viewing details for:', appointment.name)}
+                              className="text-xs font-medium px-4 py-1.5 rounded-xl bg-white/70 hover:bg-white shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
                             >
                               View Details
                             </button>
@@ -222,18 +290,43 @@ export default function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {/* Quick Actions */}
+      <div className="mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+          {quickActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={() => handleQuickAction(action)}
+              className={`group flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-br ${
+                action.color === 'blue' ? 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700' :
+                action.color === 'green' ? 'from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700' :
+                action.color === 'red' ? 'from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700' :
+                'from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700'
+              } text-white shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105`}
+            >
+              <span className="text-white text-2xl mb-2 group-hover:scale-110 transition-transform duration-200">
+                {action.icon}
+              </span>
+              <span className="font-medium text-sm text-center whitespace-nowrap">
+                {action.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Header with Navigation and User Profile */}
       <div className="flex justify-between items-center mb-8">
-        <nav className="flex space-x-1 rounded-xl bg-white p-1 shadow-sm">
+        <nav className="flex space-x-2 rounded-2xl bg-white/80 p-2 shadow-lg backdrop-blur-lg">
           {['overview', 'patients', 'analytics', 'tasks'].map((tab) => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
               className={`${
                 selectedTab === tab
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-100'
-              } flex-1 rounded-lg py-2.5 px-6 text-sm font-medium transition-all duration-200`}
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg transform scale-105'
+                  : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+              } rounded-xl py-2.5 px-6 text-sm font-medium transition-all duration-300 ease-in-out hover:shadow-md hover:scale-105`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
@@ -243,30 +336,30 @@ export default function DoctorDashboard() {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-100"
+              className="relative p-2.5 text-gray-600 hover:text-blue-600 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:scale-105"
             >
               <FiBell className="w-6 h-6" />
               {notifications.length > 0 && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
               )}
             </button>
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg z-50 overflow-hidden">
+              <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl z-50 overflow-hidden transform transition-all duration-300 ease-in-out">
                 <div className="p-4 border-b">
                   <h3 className="font-semibold text-gray-800">Notifications</h3>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {notifications.map((notification) => (
-                    <div key={notification.id} className="p-4 hover:bg-gray-50 transition-colors border-b">
+                    <div key={notification.id} className="p-4 hover:bg-blue-50 transition-colors duration-200 border-b">
                       <div className="flex items-start space-x-3">
-                        <span className={`p-2 rounded-full ${
+                        <span className={`p-2 rounded-xl ${
                           notification.type === 'emergency' ? 'bg-red-100 text-red-600' :
                           notification.type === 'appointment' ? 'bg-blue-100 text-blue-600' :
                           'bg-green-100 text-green-600'
-                        }`}>
-                          {notification.type === 'emergency' ? <FiAlertCircle /> :
-                           notification.type === 'appointment' ? <FiCalendar /> :
-                           <FiBell />}
+                        } transform transition-transform duration-200 hover:scale-110`}>
+                          {notification.type === 'emergency' ? <FiAlertCircle className="w-5 h-5" /> :
+                           notification.type === 'appointment' ? <FiCalendar className="w-5 h-5" /> :
+                           <FiBell className="w-5 h-5" />}
                         </span>
                         <div>
                           <p className="text-sm text-gray-800">{notification.message}</p>

@@ -1,113 +1,102 @@
 import React from 'react';
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
+  Legend,
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
-  Legend
+  LineChart,
+  Line,
+  ResponsiveContainer
 } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444'];
 
-const DashboardCharts = ({ ageGroups, genderData, patientTrends }) => {
+const DashboardCharts = ({ ageGroups, genderData, patientTrends, departmentPerformance }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
-      {/* Patient Trends Chart */}
-      <div className="col-span-full xl:col-span-2 rounded-2xl bg-white/30 backdrop-blur-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Patient Trends</h2>
-        <div className="h-[300px]">
-          <ResponsiveContainer>
-            <AreaChart data={patientTrends}>
-              <defs>
-                <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0088FE" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#0088FE" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="name" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backdropFilter: 'blur(8px)'
-                }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="patients" 
-                stroke="#0088FE" 
-                fillOpacity={1} 
-                fill="url(#colorVisits)" 
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Patient Age Distribution */}
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Age Distribution</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ageGroups}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" fill="#3B82F6" name="Patients" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
 
-      {/* Age Distribution */}
-      <div className="rounded-2xl bg-white/30 backdrop-blur-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Age Distribution</h2>
-        <div className="h-[300px]">
-          <ResponsiveContainer>
-            <BarChart data={ageGroups}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="name" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backdropFilter: 'blur(8px)'
-                }}
-              />
-              <Bar dataKey="value" fill="rgba(59, 130, 246, 0.6)" />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Gender Distribution */}
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Gender Distribution</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={genderData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {genderData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
 
-      {/* Gender Distribution */}
-      <div className="rounded-2xl bg-white/30 backdrop-blur-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Gender Distribution</h2>
-        <div className="h-[300px]">
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie
-                data={genderData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {genderData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={`${COLORS[index % COLORS.length]}CC`} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backdropFilter: 'blur(8px)'
-                }}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+        {/* Patient Trends */}
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Weekly Patient Trends</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={Object.entries(patientTrends).map(([name, patients]) => ({ name, patients }))}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="patients" stroke="#3B82F6" name="Daily Visits" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Department Performance */}
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Department Performance</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={departmentPerformance} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" fill="#10B981" name="Performance Score" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
