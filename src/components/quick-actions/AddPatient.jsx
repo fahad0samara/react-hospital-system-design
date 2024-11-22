@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Modal from '../shared/Modal';
 
-const AddPatient = ({ isOpen, onClose }) => {
+const AddPatient = ({ isOpen, onClose, onAddPatient }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -15,8 +15,48 @@ const AddPatient = ({ isOpen, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    
+    // Create a new patient object with formatted data
+    const newPatient = {
+      id: Date.now(), // temporary ID generation
+      name: `${formData.firstName} ${formData.lastName}`,
+      age: calculateAge(formData.dateOfBirth),
+      phone: formData.contactNumber,
+      email: formData.email,
+      nextAppointment: 'Not Scheduled',
+      condition: formData.medicalHistory || 'No conditions listed',
+      address: formData.address,
+      gender: formData.gender
+    };
+
+    // Pass the new patient data to parent component
+    onAddPatient(newPatient);
+    
+    // Reset form
+    setFormData({
+      firstName: '',
+      lastName: '',
+      dateOfBirth: '',
+      gender: '',
+      contactNumber: '',
+      email: '',
+      address: '',
+      medicalHistory: ''
+    });
+    
     onClose();
+  };
+
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return 0;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
   const handleChange = (e) => {
