@@ -5,19 +5,26 @@ const testUsers = [
   {
     email: 'doctor@test.com',
     password: 'doctor123',
-    userType: 'doctor'
+    userType: 'doctor',
+    name: 'Dr. John Smith',
+    specialty: 'Emergency Medicine'
   },
   {
-    email: 'patient@test.com',
-    password: 'patient123',
-    userType: 'patient'
+    email: 'admin@test.com',
+    password: 'admin123',
+    userType: 'admin'
   }
 ]
 
 const initialState = {
-  user: null,
-  userType: null,
-  isAuthenticated: false,
+  user: { 
+    email: 'doctor@test.com', 
+    userType: 'doctor',
+    name: 'Dr. John Smith',
+    specialty: 'Emergency Medicine'
+  },
+  userType: 'doctor',
+  isAuthenticated: true,
   error: null
 }
 
@@ -44,7 +51,8 @@ export const authSlice = createSlice({
       state.error = null
     },
     register: (state, action) => {
-      testUsers.push(action.payload)
+      state.user = action.payload
+      state.isAuthenticated = true
     }
   }
 })
@@ -54,14 +62,13 @@ export const { loginSuccess, loginFailure, logout, register } = authSlice.action
 // Thunk for handling login
 export const login = (credentials) => (dispatch) => {
   const user = testUsers.find(
-    (user) =>
-      user.email === credentials.email && user.password === credentials.password
+    (u) => u.email === credentials.email && u.password === credentials.password
   )
 
   if (user) {
     dispatch(loginSuccess(user))
   } else {
-    dispatch(loginFailure('Invalid email or password'))
+    dispatch(loginFailure('Invalid credentials'))
   }
 }
 

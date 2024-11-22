@@ -17,7 +17,45 @@ import {
 
 const COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444'];
 
-const DashboardCharts = ({ ageGroups, genderData, patientTrends, departmentPerformance }) => {
+// Mock data for default values
+const defaultData = {
+  ageGroups: [
+    { name: '0-17', value: 120 },
+    { name: '18-24', value: 250 },
+    { name: '25-34', value: 420 },
+    { name: '35-44', value: 380 },
+    { name: '45-54', value: 290 },
+    { name: '55+', value: 340 }
+  ],
+  genderData: [
+    { name: 'Male', value: 540 },
+    { name: 'Female', value: 620 },
+    { name: 'Other', value: 40 }
+  ],
+  patientTrends: {
+    'Mon': 45,
+    'Tue': 52,
+    'Wed': 49,
+    'Thu': 63,
+    'Fri': 58,
+    'Sat': 48,
+    'Sun': 38
+  },
+  departmentPerformance: [
+    { name: 'Emergency', value: 92 },
+    { name: 'Surgery', value: 88 },
+    { name: 'Pediatrics', value: 85 },
+    { name: 'Cardiology', value: 90 },
+    { name: 'Neurology', value: 87 }
+  ]
+};
+
+const DashboardCharts = ({ 
+  ageGroups = defaultData.ageGroups,
+  genderData = defaultData.genderData,
+  patientTrends = defaultData.patientTrends,
+  departmentPerformance = defaultData.departmentPerformance 
+}) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
 import { useEmergency } from '../../context/EmergencyContext';
-import { FiAlertTriangle, FiClock, FiCheckCircle, FiUser, FiActivity, FiHeart, FiThermometer, FiBell, FiMessageSquare } from 'react-icons/fi';
+import { FiAlertTriangle, FiClock, FiUser, FiActivity, FiMessageSquare, FiCheckCircle } from 'react-icons/fi';
 
 const AdminDashboard = () => {
   const { emergencyCases, activeEmergencies, doctors, assignDoctor } = useEmergency();
+  const [selectedCase, setSelectedCase] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      active: 'bg-blue-100 text-blue-800',
+      completed: 'bg-green-100 text-green-800'
+    };
+    return badges[status] || badges.pending;
+  };
 
   const getSeverityColor = (severity) => {
     const colors = {
-      critical: 'bg-gradient-to-r from-red-600 to-red-700',
-      high: 'bg-gradient-to-r from-red-500 to-red-600',
-      medium: 'bg-gradient-to-r from-orange-500 to-orange-600',
-      low: 'bg-gradient-to-r from-yellow-500 to-yellow-600'
+      critical: 'bg-red-500',
+      high: 'bg-orange-500',
+      medium: 'bg-yellow-500',
+      low: 'bg-green-500'
     };
     return colors[severity?.toLowerCase()] || colors.medium;
   };
@@ -27,44 +37,6 @@ const AdminDashboard = () => {
       : `${Math.floor(minutes / 60)}h ${minutes % 60}m ago`;
   };
 
-  // Admin Header
-  const AdminHeader = () => (
-    <div className="bg-white shadow-sm mb-6 p-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-800">Emergency Admin Center</h1>
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Administrator View</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Emergency Stats for Admin
-  const AdminStats = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="text-sm text-gray-500 mb-1">Total Cases</div>
-        <div className="text-2xl font-bold text-gray-800">{emergencyCases.length}</div>
-      </div>
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="text-sm text-gray-500 mb-1">Unassigned Cases</div>
-        <div className="text-2xl font-bold text-red-500">
-          {activeEmergencies.filter(e => !e.assignedDoctor).length}
-        </div>
-      </div>
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="text-sm text-gray-500 mb-1">Critical Cases</div>
-        <div className="text-2xl font-bold text-orange-500">
-          {activeEmergencies.filter(e => e.severityLevel === 'critical').length}
-        </div>
-      </div>
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="text-sm text-gray-500 mb-1">Available Doctors</div>
-        <div className="text-2xl font-bold text-green-500">{doctors.length}</div>
-      </div>
-    </div>
-  );
-
   const handleAssignDoctor = (emergency, doctorId) => {
     const doctor = doctors.find(d => d.id === doctorId);
     if (doctor) {
@@ -74,50 +46,99 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminHeader />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <AdminStats />
+    <div>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Emergency Dashboard</h1>
+        <p className="text-gray-500">Hospital Emergency Management System</p>
+      </div>
 
-        {/* Emergency Cases List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-800">Emergency Cases</h2>
+      {/* Statistics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Cases</p>
+              <p className="text-2xl font-bold text-blue-600">{emergencyCases.length}</p>
+            </div>
+            <FiActivity className="w-8 h-8 text-blue-500" />
           </div>
-          
-          <div className="divide-y divide-gray-200">
-            {activeEmergencies.map((emergency) => (
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Active Cases</p>
+              <p className="text-2xl font-bold text-red-600">{activeEmergencies.length}</p>
+            </div>
+            <FiAlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Critical Cases</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {activeEmergencies.filter(e => e.severityLevel === 'critical').length}
+              </p>
+            </div>
+            <FiClock className="w-8 h-8 text-orange-500" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Avg Response Time</p>
+              <p className="text-2xl font-bold text-green-600">4.2m</p>
+            </div>
+            <FiCheckCircle className="w-8 h-8 text-green-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Emergency Cases */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-800">Emergency Cases</h3>
+        </div>
+
+        <div className="divide-y divide-gray-200">
+          {activeEmergencies.length === 0 ? (
+            <div className="p-6 text-center">
+              <FiCheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Cases</h3>
+              <p className="text-gray-500">All emergencies have been handled</p>
+            </div>
+          ) : (
+            activeEmergencies.map((emergency) => (
               <div key={emergency.caseId} className="p-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    {/* Severity Indicator */}
                     <div className={`w-2 h-12 rounded-full ${getSeverityColor(emergency.severityLevel)}`} />
                     
-                    {/* Case Info */}
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className="font-medium text-gray-900">
-                          Case #{emergency.caseId?.split('-')[1]}
+                          Case #{emergency.caseId}
                         </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium 
-                          ${emergency.severityLevel === 'critical' ? 'bg-red-100 text-red-800' : 
-                          emergency.severityLevel === 'high' ? 'bg-orange-100 text-orange-800' : 
-                          'bg-yellow-100 text-yellow-800'}`}>
-                          {emergency.severityLevel?.toUpperCase()}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          getStatusBadge(emergency.status)
+                        }`}>
+                          {emergency.status?.toUpperCase()}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 mt-1">
                         {emergency.patientName} • {emergency.condition}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
                         Reported {calculateTimeElapsed(emergency.timestamp)}
-                      </div>
+                      </p>
                     </div>
                   </div>
 
-                  {/* Doctor Assignment */}
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3">
                     {emergency.assignedDoctor ? (
                       <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 rounded-lg">
                         <FiUser className="w-4 h-4 text-green-500" />
@@ -139,33 +160,39 @@ const AdminDashboard = () => {
                         ))}
                       </select>
                     )}
+                    <button
+                      onClick={() => setSelectedCase(emergency)}
+                      className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center space-x-2"
+                    >
+                      <FiMessageSquare className="w-4 h-4" />
+                      <span>Details</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Vital Signs */}
                 {emergency.vitalSigns && (
-                  <div className="mt-3 grid grid-cols-4 gap-4 text-sm text-gray-500">
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-500">
                     <div className="flex items-center space-x-2">
-                      <FiHeart className="w-4 h-4 text-red-500" />
-                      <span>HR: {emergency.vitalSigns.heartRate || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <FiThermometer className="w-4 h-4 text-orange-500" />
-                      <span>Temp: {emergency.vitalSigns.temperature || 'N/A'}</span>
+                      <FiActivity className="w-4 h-4 text-red-500" />
+                      <span>HR: {emergency.vitalSigns.heartRate}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <FiActivity className="w-4 h-4 text-blue-500" />
-                      <span>BP: {emergency.vitalSigns.bloodPressure || 'N/A'}</span>
+                      <span>BP: {emergency.vitalSigns.bloodPressure}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <FiActivity className="w-4 h-4 text-purple-500" />
-                      <span>O2: {emergency.vitalSigns.oxygenSaturation || 'N/A'}</span>
+                      <FiActivity className="w-4 h-4 text-yellow-500" />
+                      <span>Temp: {emergency.vitalSigns.temperature}°C</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <FiActivity className="w-4 h-4 text-green-500" />
+                      <span>O2: {emergency.vitalSigns.oxygenSaturation}%</span>
                     </div>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
       </div>
     </div>
