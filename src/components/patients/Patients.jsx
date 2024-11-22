@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FiSearch, FiUser, FiPhone, FiMail, FiCalendar, FiPlus, FiMapPin, FiGrid, FiList, FiEdit2, FiTrash2, FiDownload, FiPrinter, FiFilter, FiEye } from 'react-icons/fi';
 import AddPatient from '../quick-actions/AddPatient';
 import EditPatient from '../quick-actions/EditPatient';
@@ -193,6 +193,24 @@ const Patients = () => {
   const [showLabResultsModal, setShowLabResultsModal] = useState(false);
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [documentType, setDocumentType] = useState('');
+  const [documentDescription, setDocumentDescription] = useState('');
+  const [documentDate, setDocumentDate] = useState('');
+  const [documentPriority, setDocumentPriority] = useState('normal');
+  const [searchTermDocuments, setSearchTermDocuments] = useState('');
+  const [filterTypeDocuments, setFilterTypeDocuments] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [selectedTags, setSelectedTags] = useState([]);
+
+  const availableDocumentTags = [
+    'Urgent Review', 'Follow-up Required', 'Pending Results', 
+    'Critical', 'Routine', 'Confidential', 'Draft',
+    'Final Report', 'Archived', 'Needs Signature'
+  ];
 
   // Save patients to localStorage whenever it changes
   useEffect(() => {
@@ -290,7 +308,98 @@ const Patients = () => {
 
   const handleDocuments = (patient) => {
     setSelectedPatient(patient);
+    // Load patient's documents if they exist
+    if (patient.documents) {
+      setUploadedFiles(patient.documents);
+    } else {
+      setUploadedFiles([]);
+    }
     setShowDocumentsModal(true);
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
+  };
+
+  const handleFileUpload = () => {
+    if (!selectedFile || !documentType) return;
+
+    const newDocument = {
+      id: Date.now(),
+      name: selectedFile.name,
+      type: documentType,
+      description: documentDescription,
+      uploadDate: new Date().toISOString(),
+      documentDate: documentDate || new Date().toISOString(),
+      priority: documentPriority || 'normal',
+      size: selectedFile.size,
+      url: URL.createObjectURL(selectedFile),
+      uploadedBy: "Dr. Smith", // Replace with actual doctor's name
+      tags: selectedTags,
+      status: 'active',
+      version: 1,
+      lastModified: new Date().toISOString()
+    };
+
+    const updatedFiles = [...uploadedFiles, newDocument];
+    setUploadedFiles(updatedFiles);
+
+    // Update patient's documents in the patients array
+    const updatedPatients = patients.map(p => {
+      if (p.id === selectedPatient.id) {
+        return {
+          ...p,
+          documents: updatedFiles
+        };
+      }
+      return p;
+    });
+    setPatients(updatedPatients);
+
+    // Reset form
+    setSelectedFile(null);
+    setDocumentType('');
+    setDocumentDescription('');
+    setDocumentDate('');
+    setDocumentPriority('normal');
+    setSelectedTags([]);
+    // Reset file input
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) fileInput.value = '';
+  };
+
+  const handleTagSelect = (tag) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const handleDeleteDocument = (documentId) => {
+    const updatedFiles = uploadedFiles.filter(file => file.id !== documentId);
+    setUploadedFiles(updatedFiles);
+
+    // Update patient's documents in the patients array
+    const updatedPatients = patients.map(p => {
+      if (p.id === selectedPatient.id) {
+        return {
+          ...p,
+          documents: updatedFiles
+        };
+      }
+      return p;
+    });
+    setPatients(updatedPatients);
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   // Export to PDF
@@ -380,6 +489,47 @@ const Patients = () => {
 
   // Get unique conditions for filter dropdown
   const uniqueConditions = [...new Set(patients.map(patient => patient.condition))];
+
+  const filteredAndSortedDocuments = useMemo(() => {
+    let docs = [...uploadedFiles];
+
+    // Apply filters
+    docs = docs.filter(file => {
+      const matchesSearch = file.name.toLowerCase().includes(searchTermDocuments.toLowerCase()) ||
+                          file.description.toLowerCase().includes(searchTermDocuments.toLowerCase());
+      const matchesType = filterTypeDocuments === 'all' || file.type === filterTypeDocuments;
+      const matchesPriority = filterPriority === 'all' || file.priority === filterPriority;
+      return matchesSearch && matchesType && matchesPriority;
+    });
+
+    // Apply sorting
+    docs.sort((a, b) => {
+      let compareResult = 0;
+      switch (sortBy) {
+        case 'date':
+          compareResult = new Date(b.documentDate) - new Date(a.documentDate);
+          break;
+        case 'name':
+          compareResult = a.name.localeCompare(b.name);
+          break;
+        case 'type':
+          compareResult = a.type.localeCompare(b.type);
+          break;
+        case 'size':
+          compareResult = b.size - a.size;
+          break;
+        case 'priority':
+          const priorityOrder = { urgent: 3, high: 2, normal: 1, low: 0 };
+          compareResult = priorityOrder[b.priority] - priorityOrder[a.priority];
+          break;
+        default:
+          compareResult = 0;
+      }
+      return sortOrder === 'asc' ? -compareResult : compareResult;
+    });
+
+    return docs;
+  }, [uploadedFiles, searchTermDocuments, filterTypeDocuments, filterPriority, sortBy, sortOrder]);
 
   const renderListView = (patient) => (
     <div
@@ -488,17 +638,17 @@ const Patients = () => {
 
       {/* Medical Info */}
       <div className="mt-4 space-y-3">
-        <div className="bg-white/40 backdrop-blur-sm rounded-lg p-3">
+        <div className="bg-white p-3 rounded-lg">
           <p className="text-sm font-medium text-gray-600">Condition</p>
           <p className="text-red-600 font-medium">{patient.condition}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/40 backdrop-blur-sm rounded-lg p-3">
+          <div className="bg-white p-3 rounded-lg">
             <p className="text-sm font-medium text-gray-600">Next Appointment</p>
             <p className="text-blue-600">{new Date(patient.nextAppointment).toLocaleDateString()}</p>
           </div>
-          <div className="bg-white/40 backdrop-blur-sm rounded-lg p-3">
+          <div className="bg-white p-3 rounded-lg">
             <p className="text-sm font-medium text-gray-600">Doctor</p>
             <p className="truncate">
               {doctors.find(d => d.id === patient.assignedDoctor)?.name || 'Not Assigned'}
@@ -508,15 +658,15 @@ const Patients = () => {
 
         {/* Vitals Summary */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-white/40 backdrop-blur-sm rounded-lg p-2 text-center">
+          <div className="bg-white p-2 rounded-lg text-center">
             <p className="text-xs font-medium text-gray-600">BP</p>
             <p className="text-sm font-medium">{patient.vitals?.bloodPressure}</p>
           </div>
-          <div className="bg-white/40 backdrop-blur-sm rounded-lg p-2 text-center">
+          <div className="bg-white p-2 rounded-lg text-center">
             <p className="text-xs font-medium text-gray-600">Temp</p>
             <p className="text-sm font-medium">{patient.vitals?.temperature}</p>
           </div>
-          <div className="bg-white/40 backdrop-blur-sm rounded-lg p-2 text-center">
+          <div className="bg-white p-2 rounded-lg text-center">
             <p className="text-xs font-medium text-gray-600">Heart Rate</p>
             <p className="text-sm font-medium">{patient.vitals?.heartRate}</p>
           </div>
@@ -528,7 +678,7 @@ const Patients = () => {
             {patient.allergies.map((allergy, index) => (
               <span
                 key={index}
-                className="px-2 py-1 bg-red-100/50 backdrop-blur-sm text-red-800 rounded-full text-xs"
+                className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs"
               >
                 {allergy}
               </span>
@@ -894,44 +1044,16 @@ const Patients = () => {
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Patient Information</h3>
                   <div className="grid grid-cols-3 gap-6">
                     <div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Full Name</p>
-                        <p className="text-lg font-semibold">{printData.name}</p>
-                      </div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Gender</p>
-                        <p className="text-gray-700">{printData.gender}</p>
-                      </div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Age</p>
-                        <p className="text-gray-700">{printData.age} years</p>
-                      </div>
+                      <p className="text-sm font-medium text-gray-600">Full Name</p>
+                      <p className="text-lg font-semibold">{printData.name}</p>
                     </div>
                     <div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Blood Group</p>
-                        <p className="font-medium">{printData.bloodGroup}</p>
-                      </div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Patient ID</p>
-                        <p>{`P${printData.id.toString().padStart(6, '0')}`}</p>
-                      </div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Registration Date</p>
-                        <p className="text-gray-700">{printData.registrationDate}</p>
-                      </div>
+                      <p className="text-sm font-medium text-gray-600">Gender</p>
+                      <p className="text-gray-700">{printData.gender}</p>
                     </div>
                     <div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Medical Condition</p>
-                        <p className="text-red-600 font-medium">{printData.condition}</p>
-                      </div>
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600">Assigned Doctor</p>
-                        <p className="font-medium">
-                          {doctors.find(d => d.id === printData.assignedDoctor)?.name || 'Not Assigned'}
-                        </p>
-                      </div>
+                      <p className="text-sm font-medium text-gray-600">Age</p>
+                      <p className="text-gray-700">{printData.age} years</p>
                     </div>
                   </div>
                 </div>
@@ -942,9 +1064,7 @@ const Patients = () => {
                   <div className="grid grid-cols-4 gap-6">
                     {printData.vitals && Object.entries(printData.vitals).map(([key, value]) => (
                       <div key={key} className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm font-medium text-gray-600">
-                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                        </p>
+                        <p className="text-sm font-medium text-gray-600">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
                         <p className="font-medium text-gray-700">{value}</p>
                       </div>
                     ))}
@@ -1313,37 +1433,262 @@ const Patients = () => {
         onClose={() => {
           setShowDocumentsModal(false);
           setSelectedPatient(null);
+          setSelectedFile(null);
+          setDocumentType('');
+          setDocumentDescription('');
+          setDocumentDate('');
+          setDocumentPriority('normal');
+          setSelectedTags([]);
         }}
         title="Medical Documents"
-        maxWidth="max-w-4xl"
+        maxWidth="max-w-5xl"
       >
         {selectedPatient && (
           <div className="p-6 space-y-6">
+            {/* Upload Section */}
             <div className="bg-white/50 backdrop-blur-sm rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Medical Documents</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Upload New Document</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-center w-full">
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                      </svg>
-                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                      <p className="text-xs text-gray-500">PDF, DOC, DOCX, or JPG (MAX. 10MB)</p>
-                    </div>
-                    <input type="file" className="hidden" />
-                  </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                    <select 
+                      value={documentType}
+                      onChange={(e) => setDocumentType(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    >
+                      <option value="">Select Type</option>
+                      <option value="Medical Report">Medical Report</option>
+                      <option value="Lab Report">Lab Report</option>
+                      <option value="X-Ray">X-Ray</option>
+                      <option value="MRI Scan">MRI Scan</option>
+                      <option value="CT Scan">CT Scan</option>
+                      <option value="Ultrasound">Ultrasound</option>
+                      <option value="ECG">ECG</option>
+                      <option value="Prescription">Prescription</option>
+                      <option value="Discharge Summary">Discharge Summary</option>
+                      <option value="Surgical Report">Surgical Report</option>
+                      <option value="Pathology Report">Pathology Report</option>
+                      <option value="Vaccination Record">Vaccination Record</option>
+                      <option value="Insurance Document">Insurance Document</option>
+                      <option value="Consent Form">Consent Form</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      onChange={handleFileSelect}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.dicom"
+                    />
+                  </div>
                 </div>
-                <div className="bg-white rounded-lg p-4">
-                  <h4 className="font-medium text-gray-700 mb-2">Uploaded Documents</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                      <span className="text-sm text-gray-600">Medical_Report_2024.pdf</span>
-                      <button className="text-red-500 hover:text-red-700">Delete</button>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Document Date</label>
+                    <input
+                      type="date"
+                      value={documentDate}
+                      onChange={(e) => setDocumentDate(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select
+                      value={documentPriority}
+                      onChange={(e) => setDocumentPriority(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    >
+                      <option value="low">Low</option>
+                      <option value="normal">Normal</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                  <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg bg-white">
+                    {availableDocumentTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => handleTagSelect(tag)}
+                        className={`px-2 py-1 rounded-full text-sm ${
+                          selectedTags.includes(tag)
+                            ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                            : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={documentDescription}
+                    onChange={(e) => setDocumentDescription(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    rows="2"
+                    placeholder="Enter document description..."
+                  ></textarea>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleFileUpload}
+                    disabled={!selectedFile || !documentType}
+                    className={`px-4 py-2 rounded-lg text-white ${
+                      !selectedFile || !documentType
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md'
+                    }`}
+                  >
+                    Upload Document
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Documents List */}
+            <div className="bg-white/50 backdrop-blur-sm rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Uploaded Documents</h3>
+                <div className="flex gap-4">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Search documents..."
+                      value={searchTermDocuments}
+                      onChange={(e) => setSearchTermDocuments(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <select
+                      value={filterTypeDocuments}
+                      onChange={(e) => setFilterTypeDocuments(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    >
+                      <option value="all">All Types</option>
+                      <option value="Medical Report">Medical Reports</option>
+                      <option value="Lab Report">Lab Reports</option>
+                      <option value="X-Ray">X-Rays</option>
+                      <option value="MRI Scan">MRI Scans</option>
+                      <option value="Prescription">Prescriptions</option>
+                    </select>
+                  </div>
+                  <div>
+                    <select
+                      value={filterPriority}
+                      onChange={(e) => setFilterPriority(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    >
+                      <option value="all">All Priorities</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="high">High</option>
+                      <option value="normal">Normal</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    >
+                      <option value="date">Date</option>
+                      <option value="name">Name</option>
+                      <option value="type">Type</option>
+                      <option value="size">Size</option>
+                      <option value="priority">Priority</option>
+                    </select>
+                    <button
+                      onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                      className="p-1 rounded-lg hover:bg-gray-100"
+                    >
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </button>
                   </div>
                 </div>
               </div>
+              {filteredAndSortedDocuments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No documents found
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredAndSortedDocuments.map((file) => (
+                    <div
+                      key={file.id}
+                      className={`flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border-l-4 ${
+                        file.priority === 'urgent' ? 'border-red-500' :
+                        file.priority === 'high' ? 'border-orange-500' :
+                        file.priority === 'normal' ? 'border-blue-500' :
+                        'border-gray-500'
+                      }`}
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-800">{file.name}</h4>
+                        <p className="text-sm text-gray-600">{file.description}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className="px-2 py-1 bg-gray-100 rounded-full text-sm">{file.type}</span>
+                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-sm text-gray-500">{formatFileSize(file.size)}</span>
+                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-sm text-gray-500">
+                            Document Date: {new Date(file.documentDate).toLocaleDateString()}
+                          </span>
+                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-sm text-gray-500">
+                            Uploaded: {new Date(file.uploadDate).toLocaleDateString()}
+                          </span>
+                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-sm text-gray-500">By: {file.uploadedBy}</span>
+                          <span className={`px-2 py-1 rounded-full text-sm ${
+                            file.priority === 'urgent' ? 'bg-red-100 text-red-800' :
+                            file.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                            file.priority === 'normal' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {file.priority ? file.priority.charAt(0).toUpperCase() + file.priority.slice(1) : 'Normal'}
+                          </span>
+                          {file.tags && file.tags.map(tag => (
+                            <span key={tag} className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                              {tag}
+                            </span>
+                          ))}
+                          {file.version > 1 && (
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                              v{file.version}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 text-sm bg-blue-50 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                        >
+                          View
+                        </a>
+                        <button
+                          onClick={() => handleDeleteDocument(file.id)}
+                          className="px-3 py-1 text-sm bg-red-50 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
