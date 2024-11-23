@@ -21,6 +21,49 @@ const Documents = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedTags, setSelectedTags] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [previewDocument, setPreviewDocument] = useState(null);
+  const [comments, setComments] = useState({});
+
+  useEffect(() => {
+    const storedFiles = localStorage.getItem('uploadedFiles');
+    console.log('Loaded storedFiles:', storedFiles);
+    if (storedFiles) {
+      try {
+        setUploadedFiles(JSON.parse(storedFiles));
+        console.log('Parsed uploadedFiles:', JSON.parse(storedFiles));
+      } catch (e) {
+        console.error('Error parsing uploadedFiles from localStorage:', e);
+      }
+    }
+
+    const storedSelectedDocuments = localStorage.getItem('selectedDocuments');
+    console.log('Loaded storedSelectedDocuments:', storedSelectedDocuments);
+    if (storedSelectedDocuments) {
+      try {
+        setSelectedDocuments(JSON.parse(storedSelectedDocuments));
+        console.log('Parsed selectedDocuments:', JSON.parse(storedSelectedDocuments));
+      } catch (e) {
+        console.error('Error parsing selectedDocuments from localStorage:', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+      console.log('Saved uploadedFiles:', uploadedFiles);
+    } catch (e) {
+      console.error('Error saving uploadedFiles to localStorage:', e);
+    }
+
+    try {
+      localStorage.setItem('selectedDocuments', JSON.stringify(selectedDocuments));
+      console.log('Saved selectedDocuments:', selectedDocuments);
+    } catch (e) {
+      console.error('Error saving selectedDocuments to localStorage:', e);
+    }
+  }, [uploadedFiles, selectedDocuments]);
 
   const availableDocumentTags = [
     'Urgent Review', 'Follow-up Required', 'Pending Results', 
@@ -77,6 +120,97 @@ const Documents = () => {
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
+  };
+
+  const handleDocumentSelect = (id) => {
+    setSelectedDocuments((prev) =>
+      prev.includes(id) ? prev.filter((docId) => docId !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = () => {
+    setUploadedFiles((prev) => prev.filter((file) => !selectedDocuments.includes(file.id)));
+    setSelectedDocuments([]);
+  };
+
+  const handlePreview = (file) => {
+    setPreviewDocument(file);
+  };
+
+  const handleAddComment = (id, comment) => {
+    setComments((prev) => ({
+      ...prev,
+      [id]: [...(prev[id] || []), comment],
+    }));
+  };
+
+  const handleShareDocument = (file) => {
+    // Placeholder for sharing logic
+    alert(`Sharing document: ${file.name}`);
+  };
+
+  const performAdvancedSearch = (criteria) => {
+    let results = [...uploadedFiles];
+
+    if (criteria.searchTerm) {
+      results = results.filter(file =>
+        file.name.toLowerCase().includes(criteria.searchTerm.toLowerCase()) ||
+        file.description.toLowerCase().includes(criteria.searchTerm.toLowerCase())
+      );
+    }
+
+    if (criteria.tags && criteria.tags.length > 0) {
+      results = results.filter(file =>
+        criteria.tags.every(tag => file.tags.includes(tag))
+      );
+    }
+
+    if (criteria.dateRange) {
+      const { startDate, endDate } = criteria.dateRange;
+      results = results.filter(file => {
+        const fileDate = new Date(file.documentDate);
+        return fileDate >= new Date(startDate) && fileDate <= new Date(endDate);
+      });
+    }
+
+    if (criteria.uploader) {
+      results = results.filter(file =>
+        file.uploadedBy.toLowerCase().includes(criteria.uploader.toLowerCase())
+      );
+    }
+
+    return results;
+  };
+
+  const manageDocumentVersions = (fileId, action) => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (!file) return;
+
+    switch (action.type) {
+      case 'view':
+        // Logic to view versions
+        console.log(`Viewing versions for: ${file.name}`);
+        break;
+      case 'add':
+        // Logic to add a new version
+        console.log(`Adding new version for: ${file.name}`);
+        break;
+      case 'revert':
+        // Logic to revert to a previous version
+        console.log(`Reverting to version ${action.version} for: ${file.name}`);
+        break;
+      default:
+        console.error('Unknown action type');
+    }
+  };
+
+  const handleVersionControl = (file) => {
+    manageDocumentVersions(file.id, { type: 'view' });
+  };
+
+  const advancedSearch = (criteria) => {
+    const results = performAdvancedSearch(criteria);
+    console.log('Advanced search results:', results);
   };
 
   const filteredAndSortedDocuments = useMemo(() => {
@@ -320,6 +454,12 @@ const Documents = () => {
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
             </div>
+            <button
+              onClick={() => advancedSearch({ searchTerm: searchTermDocuments })}
+              className="px-4 py-2 text-sm bg-blue-50 text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+            >
+              Advanced Search
+            </button>
           </div>
         </div>
         {filteredAndSortedDocuments.length === 0 ? (
@@ -396,9 +536,45 @@ const Documents = () => {
                   >
                     Delete
                   </button>
+                  <button
+                    onClick={() => handleDocumentSelect(file.id)}
+                    className={`px-4 py-2 text-sm bg-blue-50 text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-100 transition-colors font-medium ${
+                      selectedDocuments.includes(file.id) ? 'bg-blue-100 text-blue-800' : ''
+                    }`}
+                  >
+                    Select
+                  </button>
+                  <button
+                    onClick={() => handlePreview(file)}
+                    className="px-4 py-2 text-sm bg-blue-50 text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                  >
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => handleShareDocument(file)}
+                    className="px-4 py-2 text-sm bg-blue-50 text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                  >
+                    Share
+                  </button>
+                  <button
+                    onClick={() => handleVersionControl(file)}
+                    className="px-4 py-2 text-sm bg-blue-50 text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                  >
+                    Version Control
+                  </button>
                 </div>
               </div>
             ))}
+            {selectedDocuments.length > 0 && (
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-4 py-2 text-sm bg-red-50 text-red-700 hover:text-red-800 rounded-lg hover:bg-red-100 transition-colors font-medium"
+                >
+                  Bulk Delete
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
