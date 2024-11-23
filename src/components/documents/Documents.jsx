@@ -1,164 +1,218 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { useTheme } from '../../context/ThemeContext';
-import { FiUpload } from 'react-icons/fi';
-import { FileUploadModal } from './FileUploadModal';
-import { FilePreview } from './FilePreview';
-import { DocumentList } from './DocumentList';
-import { extensionMap } from './FileTypeConfig';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
+import DocumentHeader from './components/DocumentHeader';
+import DocumentFilters from './components/DocumentFilters';
+import DocumentList from './components/DocumentList';
+import DocumentReport from './components/DocumentReport';
+import FileUploadModal from './FileUploadModal';
+import ErrorBoundary from '../../components/ErrorBoundary';
+
+const INITIAL_FILTER_CONFIG = {
+  searchTerm: '',
+  priority: 'all',
+  tags: [],
+  dateRange: {
+    start: null,
+    end: null
+  },
+  sortBy: 'date', // 'date', 'name', 'priority'
+  sortOrder: 'desc' // 'asc', 'desc'
+};
 
 const Documents = () => {
   const { darkMode } = useTheme();
-  const [documents, setDocuments] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [documentDescription, setDocumentDescription] = useState('');
-  const [documentPriority, setDocumentPriority] = useState('normal');
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [previewDocument, setPreviewDocument] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
-  const [filterConfig, setFilterConfig] = useState({
-    priority: '',
-    type: '',
-    searchTerm: ''
-  });
+  const [documents, setDocuments] = useLocalStorage('hospital-documents', []);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [filterConfig, setFilterConfig] = useState(INITIAL_FILTER_CONFIG);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const savedDocuments = localStorage.getItem('hospitalDocuments');
-    if (savedDocuments) {
-      setDocuments(JSON.parse(savedDocuments));
-    }
+  // Memoized available tags
+  const availableTags = useMemo(() => 
+    [...new Set(documents.flatMap(doc => doc.tags || []))],
+    [documents]
+  );
+
+  // Document management handlers
+  const handleUpload = useCallback((newDocument) => {
+    setDocuments(prevDocs => [...prevDocs, { 
+      ...newDocument, 
+      uploadDate: new Date().toISOString() 
+    }]);
+    setShowUploadModal(false);
+  }, [setDocuments]);
+
+  const handleDelete = useCallback((documentToDelete) => {
+    setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== documentToDelete.id));
+  }, [setDocuments]);
+
+  const handleUpdateDocument = useCallback((updatedDoc) => {
+    setDocuments(prevDocs => 
+      prevDocs.map(doc => doc.id === updatedDoc.id ? updatedDoc : doc)
+    );
+  }, [setDocuments]);
+
+  // Memoized filtered and sorted documents
+  const processedDocuments = useMemo(() => {
+    let filtered = documents.filter(doc => {
+      // Search term filter
+      if (filterConfig.searchTerm) {
+        const searchLower = filterConfig.searchTerm.toLowerCase();
+        const matchesName = doc.name?.toLowerCase().includes(searchLower);
+        const matchesDescription = doc.description?.toLowerCase().includes(searchLower);
+        const matchesTags = doc.tags?.some(tag => tag.toLowerCase().includes(searchLower));
+        if (!matchesName && !matchesDescription && !matchesTags) {
+          return false;
+        }
+      }
+
+      // Priority filter
+      if (filterConfig.priority !== 'all' && doc.priority !== filterConfig.priority) {
+        return false;
+      }
+
+      // Tags filter
+      if (filterConfig.tags.length > 0 && !filterConfig.tags.some(tag => doc.tags?.includes(tag))) {
+        return false;
+      }
+
+      // Date range filter
+      if (filterConfig.dateRange.start && filterConfig.dateRange.end) {
+        const docDate = new Date(doc.uploadDate);
+        const startDate = new Date(filterConfig.dateRange.start);
+        const endDate = new Date(filterConfig.dateRange.end);
+        if (docDate < startDate || docDate > endDate) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Sort documents
+    filtered.sort((a, b) => {
+      const order = filterConfig.sortOrder === 'asc' ? 1 : -1;
+      
+      switch (filterConfig.sortBy) {
+        case 'name':
+          return order * (a.name || '').localeCompare(b.name || '');
+        case 'priority': {
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          return order * (priorityOrder[b.priority] - priorityOrder[a.priority]);
+        }
+        case 'date':
+        default:
+          return order * (new Date(b.uploadDate) - new Date(a.uploadDate));
+      }
+    });
+
+    return filtered;
+  }, [documents, filterConfig]);
+
+  // Filter management
+  const handleFilterChange = useCallback((updates) => {
+    setFilterConfig(prev => ({ ...prev, ...updates }));
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('hospitalDocuments', JSON.stringify(documents));
-  }, [documents]);
+  const handleResetFilters = useCallback(() => {
+    setFilterConfig(INITIAL_FILTER_CONFIG);
+  }, []);
 
-  const handleFileSelect = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const fileExtension = file.name.split('.').pop().toLowerCase();
-    const mimeType = extensionMap[fileExtension] || file.type;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      setSelectedFile({
-        file,
-        content: e.target.result,
-        type: mimeType,
-        dataUrl: e.target.result
-      });
-    };
-
-    if (mimeType === 'text/csv') {
-      reader.readAsText(file);
-    } else {
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleFileUpload = () => {
-    if (!selectedFile) return;
-
-    const newDocument = {
-      id: Date.now().toString(),
-      name: selectedFile.file.name,
-      type: selectedFile.type,
-      description: documentDescription,
-      priority: documentPriority,
-      tags: selectedTags,
-      content: selectedFile.content,
-      dataUrl: selectedFile.dataUrl,
-      uploadDate: new Date().toISOString()
-    };
-
-    setDocuments(prev => [...prev, newDocument]);
-    setIsModalOpen(false);
-    resetUploadForm();
-  };
-
-  const resetUploadForm = () => {
-    setSelectedFile(null);
-    setDocumentDescription('');
-    setDocumentPriority('normal');
-    setSelectedTags([]);
-  };
-
-  const handleDeleteDocument = (doc) => {
-    if (window.confirm('Are you sure you want to delete this document?')) {
-      setDocuments(prev => prev.filter(d => d.id !== doc.id));
-    }
-  };
-
-  const handleDownloadDocument = (doc) => {
-    const link = document.createElement('a');
-    link.href = doc.dataUrl;
-    link.download = doc.name;
-    link.click();
-  };
+  if (isLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${
+        darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
+      }`}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen p-6 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-          Documents
-        </h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-            darkMode
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
-        >
-          <FiUpload className="h-5 w-5" />
-          Upload Document
-        </button>
+    <ErrorBoundary>
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        {showReport ? (
+          <DocumentReport 
+            documents={documents}
+            onBack={() => setShowReport(false)}
+          />
+        ) : (
+          <div className="container mx-auto px-4 py-8">
+            <DocumentHeader 
+              onUploadClick={() => setShowUploadModal(true)}
+              onReportClick={() => setShowReport(true)}
+              documentCount={documents.length}
+            />
+            
+            <DocumentFilters
+              filterConfig={filterConfig}
+              onFilterChange={handleFilterChange}
+              onResetFilters={handleResetFilters}
+              availableTags={availableTags}
+            />
+
+            <DocumentList
+              documents={processedDocuments}
+              onDelete={handleDelete}
+              onUpdate={handleUpdateDocument}
+              isLoading={isLoading}
+            />
+
+            {showUploadModal && (
+              <FileUploadModal
+                onClose={() => setShowUploadModal(false)}
+                onUpload={handleUpload}
+              />
+            )}
+          </div>
+        )}
       </div>
-
-      {/* Document List */}
-      <DocumentList
-        darkMode={darkMode}
-        documents={documents}
-        onPreview={setPreviewDocument}
-        onDelete={handleDeleteDocument}
-        onDownload={handleDownloadDocument}
-        sortConfig={sortConfig}
-        setSortConfig={setSortConfig}
-        filterConfig={filterConfig}
-        setFilterConfig={setFilterConfig}
-      />
-
-      {/* Upload Modal */}
-      <FileUploadModal
-        darkMode={darkMode}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          resetUploadForm();
-        }}
-        onFileSelect={handleFileSelect}
-        onUpload={handleFileUpload}
-        selectedFile={selectedFile}
-        documentDescription={documentDescription}
-        setDocumentDescription={setDocumentDescription}
-        documentPriority={documentPriority}
-        setDocumentPriority={setDocumentPriority}
-        selectedTags={selectedTags}
-        setSelectedTags={setSelectedTags}
-      />
-
-      {/* Preview Modal */}
-      {previewDocument && (
-        <FilePreview
-          file={previewDocument}
-          darkMode={darkMode}
-          onClose={() => setPreviewDocument(null)}
-        />
-      )}
-    </div>
+    </ErrorBoundary>
   );
+};
+
+// PropTypes for child components
+DocumentHeader.propTypes = {
+  onUploadClick: PropTypes.func.isRequired,
+  onReportClick: PropTypes.func.isRequired,
+  documentCount: PropTypes.number.isRequired
+};
+
+DocumentFilters.propTypes = {
+  filterConfig: PropTypes.shape({
+    searchTerm: PropTypes.string.isRequired,
+    priority: PropTypes.string.isRequired,
+    tags: PropTypes.arrayOf(PropTypes.string).isRequired,
+    dateRange: PropTypes.shape({
+      start: PropTypes.string,
+      end: PropTypes.string
+    }).isRequired,
+    sortBy: PropTypes.string.isRequired,
+    sortOrder: PropTypes.string.isRequired
+  }).isRequired,
+  onFilterChange: PropTypes.func.isRequired,
+  onResetFilters: PropTypes.func.isRequired,
+  availableTags: PropTypes.arrayOf(PropTypes.string).isRequired
+};
+
+DocumentList.propTypes = {
+  documents: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+      size: PropTypes.number.isRequired,
+      uploadDate: PropTypes.string.isRequired,
+      priority: PropTypes.string,
+      tags: PropTypes.arrayOf(PropTypes.string),
+      description: PropTypes.string
+    })
+  ).isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onUpdate: PropTypes.func.isRequired,
+  isLoading: PropTypes.bool.isRequired
 };
 
 export default Documents;
