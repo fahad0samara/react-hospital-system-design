@@ -20,6 +20,7 @@ const AddPatientModal = ({ darkMode, onClose, onSubmit }) => {
   });
 
   const [activeTab, setActiveTab] = useState('basic');
+  const [formErrors, setFormErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,8 +30,30 @@ const AddPatientModal = ({ darkMode, onClose, onSubmit }) => {
     }));
   };
 
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.name) errors.name = 'Name is required';
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email)) {
+      errors.email = 'Invalid email format';
+    }
+    if (!formData.phone) {
+      errors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      errors.phone = 'Phone number must be 10 digits';
+    }
+    if (!formData.dateOfBirth) errors.dateOfBirth = 'Date of Birth is required';
+    return errors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
     onSubmit(formData);
     setFormData({
       name: '',
@@ -52,7 +75,7 @@ const AddPatientModal = ({ darkMode, onClose, onSubmit }) => {
   };
 
   const modalClasses = darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900';
-  const inputClasses = `w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-colors duration-200 ${
+  const inputClasses = `w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-transform duration-200 ease-in-out transform hover:scale-105 ${
     darkMode
       ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 hover:border-gray-500'
       : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-400 hover:border-gray-400'
@@ -118,6 +141,7 @@ const AddPatientModal = ({ darkMode, onClose, onSubmit }) => {
                 <div>
                   <label htmlFor="name" className={labelClasses}>
                     Full Name
+                    {formErrors.name && <span className="text-red-500 text-xs">{formErrors.name}</span>}
                   </label>
                   <div className="relative">
                     <FiUser className="absolute left-3 top-3 text-gray-400" />
@@ -137,6 +161,7 @@ const AddPatientModal = ({ darkMode, onClose, onSubmit }) => {
                 <div>
                   <label htmlFor="dateOfBirth" className={labelClasses}>
                     Date of Birth
+                    {formErrors.dateOfBirth && <span className="text-red-500 text-xs">{formErrors.dateOfBirth}</span>}
                   </label>
                   <div className="relative">
                     <FiCalendar className="absolute left-3 top-3 text-gray-400" />
@@ -268,6 +293,7 @@ const AddPatientModal = ({ darkMode, onClose, onSubmit }) => {
                 <div>
                   <label htmlFor="email" className={labelClasses}>
                     Email Address
+                    {formErrors.email && <span className="text-red-500 text-xs">{formErrors.email}</span>}
                   </label>
                   <div className="relative">
                     <FiMail className="absolute left-3 top-3 text-gray-400" />
@@ -287,6 +313,7 @@ const AddPatientModal = ({ darkMode, onClose, onSubmit }) => {
                 <div>
                   <label htmlFor="phone" className={labelClasses}>
                     Phone Number
+                    {formErrors.phone && <span className="text-red-500 text-xs">{formErrors.phone}</span>}
                   </label>
                   <div className="relative">
                     <FiPhone className="absolute left-3 top-3 text-gray-400" />
