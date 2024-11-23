@@ -3,13 +3,14 @@ import { motion } from 'framer-motion';
 import {
   FiActivity, FiUsers, FiCalendar, FiClock,
   FiTrendingUp, FiPieChart, FiBarChart2, FiArrowUp,
-  FiArrowDown, FiAlertCircle, FiCheckCircle
+  FiArrowDown, FiAlertCircle, FiCheckCircle, FiDownload
 } from 'react-icons/fi';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
+import { saveAs } from 'file-saver';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
@@ -79,13 +80,32 @@ const Analytics = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const exportData = () => {
+    const csvData = [
+      ['Day', 'Patients'],
+      ...patientData.map(row => [row.name, row.value])
+    ];
+    const csvContent = csvData.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, 'patient_data.csv');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Analytics Dashboard</h1>
-          <p className="text-gray-600 mt-2">Track your hospital performance metrics</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Analytics Dashboard</h1>
+            <p className="text-gray-600 mt-2">Track your hospital performance metrics</p>
+          </div>
+          <button
+            onClick={exportData}
+            className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition"
+          >
+            <FiDownload className="w-5 h-5" />
+            <span>Export CSV</span>
+          </button>
         </div>
 
         {/* Time Range Selector */}

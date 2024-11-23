@@ -2,17 +2,14 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './app/store';
-
 import DoctorLayout from './components/doctor/DoctorLayout';
 import { EmergencyProvider } from './context/EmergencyContext';
 import DoctorDashboard from './components/dashboard/DoctorDashboard';
-import EmergencyReports from './components/reports/EmergencyReports';
 import DoctorReports from './components/reports/DoctorReports';
 import Patients from './components/patients/Patients';
 import Documents from './components/documents/Documents';
-import Settings from './components/settings/Settings';
 import Analytics from './components/analytics/Analytics';
-import { useSelector } from 'react-redux';
+import Settings from './components/settings/Settings';
 
 // Doctor Routes Component
 const DoctorRoutes = () => (
@@ -23,8 +20,7 @@ const DoctorRoutes = () => (
       <Route path="patients" element={<Patients />} />
       <Route path="documents" element={<Documents />} />
       <Route path="reports" element={<DoctorReports />} />
-      <Route path="settings" element={<Settingsadd .
-       />} />
+      <Route path="settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   </DoctorLayout>
