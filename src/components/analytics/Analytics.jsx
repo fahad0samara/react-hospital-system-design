@@ -11,37 +11,42 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import { saveAs } from 'file-saver';
+import { useTheme } from '../../context/ThemeContext';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-const StatCard = ({ title, value, icon: Icon, trend, trendValue, color }) => (
-  <motion.div
-    whileHover={{ y: -5 }}
-    className="bg-white p-6 rounded-xl shadow-md"
-  >
-    <div className="flex justify-between items-start">
-      <div>
-        <p className="text-gray-500 text-sm">{title}</p>
-        <h3 className="text-2xl font-bold mt-1">{value}</h3>
-        {trend && (
-          <div className={`flex items-center mt-2 ${
-            trend === 'up' ? 'text-green-500' : 'text-red-500'
-          }`}>
-            {trend === 'up' ? <FiArrowUp /> : <FiArrowDown />}
-            <span className="ml-1 text-sm">{trendValue}%</span>
-          </div>
-        )}
+const StatCard = ({ title, value, icon: Icon, trend, trendValue, color }) => {
+  const { darkMode } = useTheme();
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md transition-colors duration-200`}
+    >
+      <div className="flex justify-between items-start">
+        <div>
+          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>{title}</p>
+          <h3 className={`text-2xl font-bold mt-1 ${darkMode ? 'text-white' : 'text-gray-800'}`}>{value}</h3>
+          {trend && (
+            <div className={`flex items-center mt-2 ${
+              trend === 'up' ? 'text-green-500' : 'text-red-500'
+            }`}>
+              {trend === 'up' ? <FiArrowUp /> : <FiArrowDown />}
+              <span className="ml-1 text-sm">{trendValue}%</span>
+            </div>
+          )}
+        </div>
+        <div className={`p-3 rounded-lg ${color}`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
       </div>
-      <div className={`p-3 rounded-lg ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
-      </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('week');
   const [loading, setLoading] = useState(true);
+  const { darkMode } = useTheme();
 
   // Sample data - replace with real API data
   const patientData = [
@@ -91,13 +96,13 @@ const Analytics = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-6 transition-colors duration-200`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Analytics Dashboard</h1>
-            <p className="text-gray-600 mt-2">Track your hospital performance metrics</p>
+            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Analytics Dashboard</h1>
+            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-2`}>Track your hospital performance metrics</p>
           </div>
           <button
             onClick={exportData}
@@ -117,7 +122,9 @@ const Analytics = () => {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 timeRange === range
                   ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  : darkMode 
+                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
               {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -167,22 +174,34 @@ const Analytics = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-xl shadow-md"
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md transition-colors duration-200`}
           >
-            <h3 className="text-lg font-semibold mb-4">Patient Trends</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Patient Trends</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={patientData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#e5e7eb'} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke={darkMode ? '#9CA3AF' : '#4B5563'}
+                  />
+                  <YAxis 
+                    stroke={darkMode ? '#9CA3AF' : '#4B5563'}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: darkMode ? '#F3F4F6' : '#1F2937'
+                    }}
+                  />
                   <Area
                     type="monotone"
                     dataKey="value"
                     stroke="#0088FE"
                     fill="#0088FE"
-                    fillOpacity={0.2}
+                    fillOpacity={darkMode ? 0.3 : 0.2}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -193,9 +212,9 @@ const Analytics = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-xl shadow-md"
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md transition-colors duration-200`}
           >
-            <h3 className="text-lg font-semibold mb-4">Department Distribution</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Department Distribution</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -204,7 +223,7 @@ const Analytics = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    outerRadius={100}
+                    outerRadius={120}
                     fill="#8884d8"
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
@@ -213,7 +232,14 @@ const Analytics = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: darkMode ? '#F3F4F6' : '#1F2937'
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -223,16 +249,28 @@ const Analytics = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-xl shadow-md lg:col-span-2"
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md lg:col-span-2 transition-colors duration-200`}
           >
-            <h3 className="text-lg font-semibold mb-4">Today's Appointments</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Today's Appointments</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={appointmentData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#e5e7eb'} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke={darkMode ? '#9CA3AF' : '#4B5563'}
+                  />
+                  <YAxis 
+                    stroke={darkMode ? '#9CA3AF' : '#4B5563'}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: darkMode ? '#F3F4F6' : '#1F2937'
+                    }}
+                  />
                   <Bar dataKey="scheduled" fill="#0088FE" name="Scheduled" />
                   <Bar dataKey="completed" fill="#00C49F" name="Completed" />
                 </BarChart>
@@ -245,9 +283,9 @@ const Analytics = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-xl shadow-md"
+          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md transition-colors duration-200`}
         >
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+          <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Recent Activity</h3>
           <div className="space-y-4">
             {[
               { icon: FiCheckCircle, color: 'text-green-500', text: 'Dr. Smith completed appointment with Patient #1234' },
@@ -257,7 +295,7 @@ const Analytics = () => {
             ].map((activity, index) => (
               <div key={index} className="flex items-center space-x-3">
                 <activity.icon className={`w-5 h-5 ${activity.color}`} />
-                <p className="text-gray-600">{activity.text}</p>
+                <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{activity.text}</p>
               </div>
             ))}
           </div>

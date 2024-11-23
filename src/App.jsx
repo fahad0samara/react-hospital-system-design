@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store } from './app/store';
 import DoctorLayout from './components/doctor/DoctorLayout';
 import { EmergencyProvider } from './context/EmergencyContext';
+import { ThemeProvider } from './context/ThemeContext';
 import DoctorDashboard from './components/dashboard/DoctorDashboard';
 import DoctorReports from './components/reports/DoctorReports';
 import Patients from './components/patients/Patients';
@@ -26,20 +27,19 @@ const DoctorRoutes = () => (
   </DoctorLayout>
 );
 
-
-
 function App() {
-
   return (
     <Provider store={store}>
-      <EmergencyProvider>
-        <Router>
-          <Routes>
-            <Route path="/doctor/*" element={<DoctorRoutes />} />
-            <Route path="/" element={<Navigate to="/doctor/dashboard" replace />} />
-          </Routes>
-        </Router>
-      </EmergencyProvider>
+      <ThemeProvider>
+        <EmergencyProvider>
+          <Router>
+            <Routes>
+              <Route path="/doctor/*" element={<DoctorRoutes />} />
+              <Route path="/" element={<Navigate to="/doctor/dashboard" replace />} />
+            </Routes>
+          </Router>
+        </EmergencyProvider>
+      </ThemeProvider>
     </Provider>
   );
 }

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Modal from '../shared/Modal';
+import { useTheme } from '../../context/ThemeContext';
 
 const AddPatient = ({ isOpen, onClose, onAddPatient }) => {
+  const { darkMode } = useTheme();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -66,29 +68,39 @@ const AddPatient = ({ isOpen, onClose, onAddPatient }) => {
     });
   };
 
+  const inputClasses = `w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-colors duration-200 ${
+    darkMode
+      ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
+      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+  }`;
+
+  const labelClasses = `block text-sm font-medium mb-1 ${
+    darkMode ? 'text-gray-200' : 'text-gray-700'
+  }`;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add New Patient" maxWidth="max-w-3xl">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+            <label className={labelClasses}>First Name</label>
             <input
               type="text"
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+              className={inputClasses}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+            <label className={labelClasses}>Last Name</label>
             <input
               type="text"
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+              className={inputClasses}
               required
             />
           </div>
@@ -96,23 +108,23 @@ const AddPatient = ({ isOpen, onClose, onAddPatient }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+            <label className={labelClasses}>Date of Birth</label>
             <input
               type="date"
               name="dateOfBirth"
               value={formData.dateOfBirth}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900"
+              className={inputClasses}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+            <label className={labelClasses}>Gender</label>
             <select
               name="gender"
               value={formData.gender}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900"
+              className={inputClasses}
               required
             >
               <option value="">Select Gender</option>
@@ -125,25 +137,25 @@ const AddPatient = ({ isOpen, onClose, onAddPatient }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+            <label className={labelClasses}>Contact Number</label>
             <input
               type="tel"
               name="contactNumber"
               value={formData.contactNumber}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+              className={inputClasses}
               placeholder="e.g., +1 234 567 8900"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className={labelClasses}>Email</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+              className={inputClasses}
               placeholder="patient@example.com"
               required
             />
@@ -151,26 +163,26 @@ const AddPatient = ({ isOpen, onClose, onAddPatient }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <label className={labelClasses}>Address</label>
           <textarea
             name="address"
             value={formData.address}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+            className={inputClasses}
             placeholder="Enter full address"
             required
           ></textarea>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Medical History</label>
+          <label className={labelClasses}>Medical History</label>
           <textarea
             name="medicalHistory"
             value={formData.medicalHistory}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+            className={inputClasses}
             placeholder="Enter any relevant medical history"
           ></textarea>
         </div>
@@ -179,7 +191,11 @@ const AddPatient = ({ isOpen, onClose, onAddPatient }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+            className={`px-6 py-2.5 rounded-xl border font-medium transition-colors ${
+              darkMode
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
           >
             Cancel
           </button>

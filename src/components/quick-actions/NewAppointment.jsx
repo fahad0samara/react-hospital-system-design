@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Modal from '../shared/Modal';
+import { useTheme } from '../../context/ThemeContext';
 
 const NewAppointment = ({ isOpen, onClose }) => {
+  const { darkMode } = useTheme();
   const [formData, setFormData] = useState({
     patientName: '',
     appointmentType: '',
@@ -24,17 +26,27 @@ const NewAppointment = ({ isOpen, onClose }) => {
     });
   };
 
+  const inputClasses = `w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm transition-colors duration-200 ${
+    darkMode
+      ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
+      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+  }`;
+
+  const labelClasses = `block text-sm font-medium mb-1 ${
+    darkMode ? 'text-gray-200' : 'text-gray-700'
+  }`;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Schedule New Appointment" maxWidth="max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
+          <label className={labelClasses}>Patient Name</label>
           <input
             type="text"
             name="patientName"
             value={formData.patientName}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+            className={inputClasses}
             placeholder="Enter patient name"
             required
           />
@@ -42,24 +54,24 @@ const NewAppointment = ({ isOpen, onClose }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className={labelClasses}>Date</label>
             <input
               type="date"
               name="date"
               value={formData.date}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm text-gray-900"
+              className={inputClasses}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+            <label className={labelClasses}>Time</label>
             <input
               type="time"
               name="time"
               value={formData.time}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm text-gray-900"
+              className={inputClasses}
               required
             />
           </div>
@@ -67,12 +79,12 @@ const NewAppointment = ({ isOpen, onClose }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Appointment Type</label>
+            <label className={labelClasses}>Appointment Type</label>
             <select
               name="appointmentType"
               value={formData.appointmentType}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm text-gray-900"
+              className={inputClasses}
               required
             >
               <option value="">Select Type</option>
@@ -84,12 +96,12 @@ const NewAppointment = ({ isOpen, onClose }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+            <label className={labelClasses}>Duration</label>
             <select
               name="duration"
               value={formData.duration}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm text-gray-900"
+              className={inputClasses}
               required
             >
               <option value="">Select Duration</option>
@@ -103,13 +115,13 @@ const NewAppointment = ({ isOpen, onClose }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <label className={labelClasses}>Notes</label>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
+            className={inputClasses}
             placeholder="Add any additional notes or special instructions"
           ></textarea>
         </div>
@@ -118,13 +130,21 @@ const NewAppointment = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+            className={`px-6 py-2.5 rounded-xl border font-medium transition-colors ${
+              darkMode
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 transition-colors font-medium shadow-md hover:shadow-lg"
+            className={`px-6 py-2.5 rounded-xl bg-gradient-to-r text-white font-medium shadow-md hover:shadow-lg ${
+              darkMode
+                ? 'from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                : 'from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+            }`}
           >
             Schedule Appointment
           </button>
